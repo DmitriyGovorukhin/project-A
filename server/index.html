@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Robot</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <script type="text/javascript" src="js/jsmpeg.min.js"></script>
+    <script type="text/javascript" src="js/gamepad.min.js"></script>
+    <script type="text/javascript" src="js/control.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="col-md-2">
+        <div class="row center-block">
+            <div class="connect">
+                <button id="btn" class="btn btn-default">connect</button>
+            </div>
+        </div>
+        <div class="grp">
+            <ul class="list-group">
+                <li id="x" class="list-group-item">X:0</li>
+                <li id="y" class="list-group-item">Y:0</li>
+            </ul>
+        </div>
+        <div class="grp">
+            <ul class="list-group">
+                <li id="motorL" class="list-group-item">L:0</li>
+                <li id="motorR" class="list-group-item">R:0</li>
+            </ul>
+        </div>
+
+    </div>
+    <div class="col-md-9">
+        <div class="row center-block block">
+            <canvas id="video-canvas"></canvas>
+        </div>
+        <div class="row center-block">
+            <div class="log">
+                <textarea id="log"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+.block {
+    width: 1280px;
+    height: 720px;
+    margin-top: 30px;
+    border: 1px solid #ddd;
+}
+
+.connect {
+    margin-top: 30px;
+    text-align: center;
+    /*  border: 1px solid #ddd;*/
+}
+
+.grp {
+    margin-top: 30px;
+    /*border: 1px solid #ddd;*/
+}
+
+.log {
+    /* border: 1px solid #ddd;*/
+}
+
+textarea {
+    overflow-y: scroll;
+    height: 100px;
+    margin-top: 20px;
+    width: 92%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    resize: none;
+}
