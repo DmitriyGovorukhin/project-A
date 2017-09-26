@@ -13,24 +13,20 @@ window.onload = function () {
     var url1 = 'ws://' + document.location.hostname + ':' + port1 + '/';
     var url2 = 'ws://' + document.location.hostname + ':' + port2 + '/';
 
-    var canvas = document.getElementById('video-canvas');
-
-    var ctx = canvas.getContext('2d');
-
     var player;
 
-    var connected = 0;
+    var connected = false;
 
     var socket;
 
     button.onclick = function () {
-        if (connected === 0) {
+        if (!connected) {
             socket = new WebSocket(url1);
 
             socket.onopen = function () {
                 log("connected to " + url1);
 
-                // log("video stream from " + url2);
+                socket.send(JSON.stringify({client: "browser", cmd: "video_start"}))
             };
 
             socket.onclose = function (event) {
@@ -52,11 +48,11 @@ window.onload = function () {
                 log(event.data)
             };
 
+            player = new JSMpeg.Player(url2, {canvas: document.getElementById('video-canvas')});
+
             button.innerHTML = "disconnect";
 
-            player = new JSMpeg.Player(url2, {canvas: canvas});
-
-            connected = 1;
+            connected = true;
         } else {
             player.pause();
 
@@ -68,7 +64,7 @@ window.onload = function () {
 
             button.innerHTML = "connect";
 
-            connected = 0;
+            connected = false;
         }
 
         button.blur();

@@ -6,20 +6,33 @@ var port1 = 8090;
 
 var wsServer1 = new ws.Server({port: port1, perMessageDeflate: false});
 
+var robotWs;
+var browserWs;
+
 wsServer1.on('connection', function (socket, upgradeReq) {
     console.log(
         'New WebSocket Connection: ',
         (upgradeReq || socket.upgradeReq).socket.remoteAddress,
-        (upgradeReq || socket.upgradeReq).headers['user-agent']);
+        (upgradeReq || socket.upgradeReq).headers['user-agent'], port1);
 
     socket.on('close', function (code, message) {
         console.log('disconnected');
     });
 
     socket.onmessage = function (event) {
-        console.log('received ' + event.data);
+        console.log('> ' + event.data);
 
-        socket.send('echo ' + event.data);
+        if (robotWs !== null && robotWs !== undefined) {
+            robotWs.send(event.data)
+        }
+
+        var val = JSON.parse(event.data);
+
+        if (val["client"] === "robot")
+            robotWs = socket;
+
+        if (val["client"] === "browser")
+            browserWs = socket;
     };
 });
 
@@ -33,7 +46,7 @@ wsServer2.on('connection', function (socket, upgradeReq) {
     console.log(
         'New WebSocket Connection: ',
         (upgradeReq || socket.upgradeReq).socket.remoteAddress,
-        (upgradeReq || socket.upgradeReq).headers['user-agent']
+        (upgradeReq || socket.upgradeReq).headers['user-agent'], port2
     );
 
     socket.on('close', function (code, message) {
@@ -53,7 +66,7 @@ console.log('Awaiting WebSocket connections on ws://127.0.0.1:' + port2 + '/');
 
 var portStream1 = 8092;
 
-var streamServer = http.createServer(function (request, response) {
+http.createServer(function (request, response) {
     response.connection.setTimeout(0);
 
     console.log(
