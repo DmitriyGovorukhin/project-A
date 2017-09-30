@@ -17,7 +17,12 @@ window.onload = function () {
 
     var connected = false;
 
+    var video_started = false;
+
     var socket;
+
+    var A = document.getElementById('motorL');
+    var B = document.getElementById('motorR');
 
     button.onclick = function () {
         if (!connected) {
@@ -26,7 +31,7 @@ window.onload = function () {
             socket.onopen = function () {
                 log("connected to " + url1);
 
-                socket.send(JSON.stringify({client: "browser", cmd: "video_start"}))
+                socket.send(JSON.stringify({from: 'browser'}));
             };
 
             socket.onclose = function (event) {
@@ -40,23 +45,40 @@ window.onload = function () {
 
                 button.innerHTML = "connect";
 
+                A.innerHTML = "L:0";
+                B.innerHTML = "R:0";
+
                 connected = 0;
             };
 
             socket.onmessage = function (event) {
-                // var obj = JSON.parse(event.data);
-                log(event.data)
-            };
+                log(event.data);
 
-            player = new JSMpeg.Player(url2, {canvas: document.getElementById('video-canvas')});
+                var obj = JSON.parse(event.data);
+
+                A.innerHTML = "L:" + obj.A;
+                B.innerHTML = "R:" + obj.B;
+            };
 
             button.innerHTML = "disconnect";
 
             connected = true;
         } else {
-            player.pause();
+            if (player)
+                player.pause();
 
             player = null;
+
+            document.getElementById("cvs").removeChild(document.getElementById("video-canvas"));
+
+            var el = document.createElement('canvas');
+            el.id = "video-canvas";
+
+            document.getElementById("cvs").appendChild(el);
+
+            socket.send(JSON.stringify({from: 'browser', cmd: "video_stop"}));
+
+            video_started = false;
 
             socket.close();
 
@@ -89,13 +111,18 @@ window.onload = function () {
         }
 
         if (a === "RIGHT_STICK_Y") {
-            y.innerHTML = "Y:" + val;
+            y.innerHTML = "Y:" + -val;
 
             state.y = val;
         }
 
         if (socket !== null && socket !== undefined) {
-            socket.send(JSON.stringify(state))
+            socket.send(JSON.stringify({
+                from: 'browser',
+                cmd: 'axis',
+                "x": state.x,
+                "y": -state.y
+            }))
         }
     }
 
@@ -114,7 +141,46 @@ window.onload = function () {
     });
 
     gamepad.bind(Gamepad.Event.BUTTON_UP, function (e) {
-        log("BUTTON_UP " + e.control)
+        log("BUTTON_UP " + e.control);
+
+        if (e.control === "FACE_4")
+            if (socket) {
+                if (!video_started) {
+                    log("Start video stream");
+
+                    var cvs = document.getElementById('video-canvas');
+
+                    cvs.width = 1280;
+                    cvs.height = 720;
+
+                    player = new JSMpeg.Player(url2, {canvas: cvs});
+
+                    socket.send(JSON.stringify({from: 'browser', cmd: "video_start"}));
+
+                    video_started = true
+                } else {
+                    log("Stop video stream");
+
+                    if (player)
+                        player.pause();
+
+                    player = null;
+
+                    document.getElementById("cvs").removeChild(document.getElementById("video-canvas"));
+
+                    var el = document.createElement('canvas');
+                    el.id = "video-canvas";
+
+                    document.getElementById("cvs").appendChild(el);
+
+                    socket.send(JSON.stringify({from: 'browser', cmd: "video_stop"}));
+
+                    video_started = false
+                }
+            }
+
+        if (e.control === "FACE_1")
+            button.onclick()
     });
 
     gamepad.bind(Gamepad.Event.AXIS_CHANGED, function (e) {

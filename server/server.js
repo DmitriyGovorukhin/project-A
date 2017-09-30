@@ -11,28 +11,44 @@ var browserWs;
 
 wsServer1.on('connection', function (socket, upgradeReq) {
     console.log(
-        'New WebSocket Connection: ',
+        'WebSocket Connection: ',
         (upgradeReq || socket.upgradeReq).socket.remoteAddress,
         (upgradeReq || socket.upgradeReq).headers['user-agent'], port1);
 
     socket.on('close', function (code, message) {
-        console.log('disconnected');
+        if (robotWs == this) {
+            console.log('> robot disconnected');
+
+            robotWs = undefined;
+        }
+
+        if (browserWs == this) {
+            console.log('> browser disconnected');
+
+            browserWs = undefined
+        }
     });
 
     socket.onmessage = function (event) {
         console.log('> ' + event.data);
 
-        if (robotWs !== null && robotWs !== undefined) {
-            robotWs.send(event.data)
-        }
-
         var val = JSON.parse(event.data);
 
-        if (val["client"] === "robot")
-            robotWs = socket;
+        if (val["from"] === "robot") {
+            if (robotWs === undefined)
+                robotWs = socket;
 
-        if (val["client"] === "browser")
-            browserWs = socket;
+            if (browserWs)
+                browserWs.send(event.data)
+        }
+
+        if (val["from"] === "browser") {
+            if (browserWs === undefined)
+                browserWs = socket;
+
+            if (robotWs)
+                robotWs.send(event.data)
+        }
     };
 });
 
@@ -44,14 +60,10 @@ var wsServer2 = new ws.Server({port: port2, perMessageDeflate: false});
 
 wsServer2.on('connection', function (socket, upgradeReq) {
     console.log(
-        'New WebSocket Connection: ',
+        'Video WebSocket Connection: ',
         (upgradeReq || socket.upgradeReq).socket.remoteAddress,
         (upgradeReq || socket.upgradeReq).headers['user-agent'], port2
     );
-
-    socket.on('close', function (code, message) {
-        console.log('Disconnected WebSocket');
-    });
 });
 
 wsServer2.broadcast = function (data) {

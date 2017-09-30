@@ -2,12 +2,42 @@ import json
 import argparse
 import websockets
 import subprocess
-import os
-import signal
+import queue
 
 from Robot import *
 
-cmd = "ffmpeg -f v4l2 -input_format mjpeg -video_size 1280x720 -i /dev/video0 -f mpegts -r 30 -codec:v mpeg1video -s 1280x720 -b:v 100000k -bf 0 http://localhost:8092"
+
+class Video(object):
+    cmd = "ffmpeg -f v4l2 -input_format mjpeg -video_size 1280x720 -i /dev/video0 -f " \
+          "mpegts -r 30 -codec:v mpeg1video -s 1280x720 -b:v 100000k -bf 0 http://localhost:8092"
+
+    def __init__(self):
+        self.q = queue.Queue()
+        self.p = None
+        thread = Thread(target=self.run, name='Video')
+        thread.daemon = True
+        thread.start()
+
+    def run(self):
+        while True:
+            next_command = self.q.get()
+
+            if next_command == "video_start" and self.p is None:
+                print("video_start")
+
+                self.p = subprocess.Popen("exec " + self.cmd, shell=True)
+            elif next_command == "video_stop" and self.p is not None:
+                print("video_stop")
+
+                self.p.kill()
+
+                self.p = None
+
+    def start_video(self):
+        self.q.put("video_start")
+
+    def stop_video(self):
+        self.q.put("video_stop")
 
 
 def remap(x, y):
@@ -53,14 +83,13 @@ def args():
 
 
 class Controller(object):
-    def __init__(self, robot, host):
+    def __init__(self, robot, video, host):
         self.robot = robot
-
-        self.p = None
+        self.video = video
 
         async def listener():
             async with websockets.connect(host) as ws:
-                init_msg = json.dumps({"client": "robot"})
+                init_msg = json.dumps({"from": "robot"})
 
                 await ws.send(init_msg)
 
@@ -71,26 +100,20 @@ class Controller(object):
 
                     data = json.loads(msg)
 
-                    if data["cmd"] == "axis":
-                        res = self.on_receive(data)
+                    if "cmd" in data:
+                        if data["cmd"] == "axis":
+                            res = {"from": "robot"}
 
-                        res["client"] = "robot"
+                            res.update(self.on_receive(data))
 
-                        print("< {}".format(res))
+                            print("< {}".format(res))
 
-                        await ws.send(json.dumps(res))
-                    elif data["cmd"] == "video_start":
-                        print("video_start")
+                            await ws.send(json.dumps(res))
+                        elif data["cmd"] == "video_start":
+                            self.video.start_video()
 
-                        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-
-                    elif data["cmd"] == "video_stop":
-                        print("video_stop")
-
-                        try:
-                            os.killpg(self.p.pid, signal.SIGINT)
-                        except ProcessLookupError:
-                            print("exp!!")
+                        elif data["cmd"] == "video_stop":
+                            self.video.stop_video()
 
         asyncio.get_event_loop().run_until_complete(listener())
 
@@ -127,4 +150,4 @@ if __name__ == "__main__":
 
     # r = Robot(comPort)
 
-    Controller(None, args.remote)
+    Controller(None, Video(), args.remote)
