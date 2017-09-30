@@ -8,10 +8,10 @@ from Robot import *
 
 
 class Video(object):
-    cmd = "ffmpeg -f v4l2 -input_format mjpeg -video_size 1280x720 -i /dev/video0 -f " \
-          "mpegts -r 30 -codec:v mpeg1video -s 1280x720 -b:v 100000k -bf 0 http://localhost:8092"
+    def __init__(self, device, host):
+        self.cmd = "ffmpeg -f v4l2 -input_format mjpeg -video_size 1280x720 -i " + device + \
+                   " -f mpegts -r 30 -codec:v mpeg1video -s 1280x720 -b:v 100000k -bf 0 http://" + host
 
-    def __init__(self):
         self.q = queue.Queue()
         self.p = None
         thread = Thread(target=self.run, name='Video')
@@ -83,12 +83,12 @@ def args():
 
 
 class Controller(object):
-    def __init__(self, robot, video, host):
+    def __init__(self, robot, video_dic, host):
         self.robot = robot
-        self.video = video
+        self.video = video_dic
 
         async def listener():
-            async with websockets.connect(host) as ws:
+            async with websockets.connect("ws://" + host + ":8090") as ws:
                 init_msg = json.dumps({"from": "robot"})
 
                 await ws.send(init_msg)
@@ -110,10 +110,10 @@ class Controller(object):
 
                             await ws.send(json.dumps(res))
                         elif data["cmd"] == "video_start":
-                            self.video.start_video()
+                            self.video["2"].start_video()
 
                         elif data["cmd"] == "video_stop":
-                            self.video.stop_video()
+                            self.video["2"].stop_video()
 
         asyncio.get_event_loop().run_until_complete(listener())
 
@@ -132,11 +132,10 @@ class Controller(object):
         if t[1] > 100 or t[1] < -100:
             b_speed = t[1]
 
-        # print("x:" + str(x) + " y:" + str(y) + " A: " + str(a_speed) + " B:" + str(b_speed))
-
         speed = {"A": a_speed, "B": b_speed}
 
-        # self.robot.update(speed)
+        if self is not None:
+            self.robot.update(speed)
 
         return speed
 
@@ -144,10 +143,15 @@ class Controller(object):
 if __name__ == "__main__":
     args = args()
 
-    print(args.remote)
+    host = args.remote
+
+    print()
 
     # comPort = "/dev/ttyACM0"
 
     # r = Robot(comPort)
 
-    Controller(None, Video(), args.remote)
+    video = {"1": Video("/dev/video1", host + ":8091"),
+             "2": Video("/dev/video0", host + ":8092")}
+
+    Controller(None, video, args.remote)
