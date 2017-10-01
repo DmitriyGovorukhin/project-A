@@ -1,10 +1,11 @@
-import json
 import argparse
-import websockets
-import subprocess
+import json
 import queue
+import subprocess
 
-from Robot import *
+import websockets
+
+from core.Robot import *
 
 
 class Video(object):
@@ -134,8 +135,8 @@ class Controller(object):
 
         speed = {"A": a_speed, "B": b_speed}
 
-        if self is not None:
-            self.robot.update(speed)
+        #if self is not None:
+         #   self.robot.update(speed)
 
         return speed
 
@@ -144,8 +145,6 @@ if __name__ == "__main__":
     args = args()
 
     host = args.remote
-
-    print()
 
     # comPort = "/dev/ttyACM0"
 

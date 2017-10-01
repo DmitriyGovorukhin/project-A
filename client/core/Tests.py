@@ -1,6 +1,6 @@
-from App import *
-
 import unittest
+
+from core.App import *
 
 
 class TestTransform(unittest.TestCase):
