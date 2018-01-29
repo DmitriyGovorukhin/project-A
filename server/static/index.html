@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="container-fluid">
-    <div class="col-md-2">
+    <div class="col-md-3">
         <div class="row center-block">
             <div class="connect">
                 <button id="btn" class="btn btn-default">connect</button>
@@ -21,18 +21,20 @@
                 <li id="x" class="list-group-item">X:0</li>
                 <li id="y" class="list-group-item">Y:0</li>
             </ul>
-        </div>
-        <div class="grp">
             <ul class="list-group">
                 <li id="motorL" class="list-group-item">L:0</li>
                 <li id="motorR" class="list-group-item">R:0</li>
             </ul>
         </div>
-
+        <div class="small-video">
+            <video id="small-video"></video>
+        </div>
     </div>
     <div class="col-md-9">
         <div class="row center-block block">
-            <canvas id="video-canvas"></canvas>
+            <div class="big-video">
+                <video id="big-video"></video>
+            </div>
         </div>
         <div class="row center-block">
             <div class="log">
