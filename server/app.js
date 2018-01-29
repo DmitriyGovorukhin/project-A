@@ -1,5 +1,5 @@
 var express = require('express');
-var ws = require('websocket ');
+var ws = require('ws');
 
 var port = 8080;
 
@@ -10,3 +10,7 @@ app.use(express.static('static'));
 app.listen(port, function () {
     console.log('Server started and listening ' + port);
 });
+
+var wsport = 8081;
+
+var wss = new ws.Server({port: wsport});
