@@ -1,4 +1,4 @@
-var fs = require('fs'),
+var fs = require('express'),
     http = require('http'),
     ws = require('ws');
 
