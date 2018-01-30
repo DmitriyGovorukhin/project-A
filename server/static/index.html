@@ -3,9 +3,12 @@
 <head>
     <meta charset="utf-8">
     <title>robot</title>
-    <link href="bootstrap.min.css" rel="stylesheet">
+    <link href="libs/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
-    <script type="text/javascript" src="gamepad.min.js"></script>
+    <script type="text/javascript" src="libs/janus.js" ></script>
+    <script type="text/javascript" src="libs/gamepad.min.js"></script>
+    <script type="text/javascript" src="libs/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.0.3/adapter.min.js" ></script>
     <script type="text/javascript" src="script.js"></script>
 </head>
 <body>
@@ -33,7 +36,7 @@
     <div class="col-md-9">
         <div class="row center-block block">
             <div class="big-video">
-                <video id="big-video"></video>
+                <video autoplay id="big-video" ></video>
             </div>
         </div>
         <div class="row center-block">
