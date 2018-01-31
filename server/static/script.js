@@ -1,4 +1,3 @@
-
 server = "http://" + window.location.hostname + ":8088/janus";
 
 var janus = null;
@@ -12,53 +11,19 @@ function log(text) {
     l.scrollTop = l.scrollHeight;
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     var button = document.getElementById('btn');
-    
-   /* var wsport = 8091;
-
-    var url1 = 'ws://' + document.location.hostname + ':' + wsport + '/';*/
 
     var connected = false;
 
     var socket;
 
-    $('#btn').click(function() {
+    $('#btn').click(function () {
         if (!connected) {
-            // socket = new WebSocket(url1);
-            //
-            // socket.onopen = function () {
-            //     log("connected to " + url1);
-            //
-            //     socket.send(JSON.stringify({client: "browser", cmd: "video_start"}))
-            // };
-            //
-            // socket.onclose = function (event) {
-            //     if (event.wasClean) {
-            //         log('close');
-            //     } else {
-            //         log('disconnected');
-            //     }
-            //
-            //     log('code: ' + event.code + ' reason: ' + event.reason);
-            //
-            //     button.innerHTML = "connect";
-            //
-            //     connected = false;
-            // };
-            //
-            // socket.onmessage = function (event) {
-            //     // var obj = JSON.parse(event.data);
-            //     log(event.data)
-            // };
-
             button.innerHTML = "disconnect";
 
             connected = true;
         } else {
-            // socket.close();
-            //
-            // socket = null;
 
             button.innerHTML = "connect";
 
@@ -133,18 +98,18 @@ $(document).ready(function() {
     });
 });
 
-function startJanus(){
+function startJanus() {
     log("starting Janus");
 
-    $('#btn').click(function() {
-        if(started){
+    $('#btn').click(function () {
+        if (started) {
             return;
         }
 
         started = true;
 
         // Make sure the browser supports WebRTC
-        if(!Janus.isWebrtcSupported()) {
+        if (!Janus.isWebrtcSupported()) {
             console.error("No webrtc support");
 
             return;
@@ -152,39 +117,39 @@ function startJanus(){
         // Create session
         janus = new Janus({
             server: server,
-            success: function() {
+            success: function () {
                 log("Success");
 
                 attachToStreamingPlugin(janus);
             },
-            error: function(error) {
+            error: function (error) {
                 log(error);
 
                 log("janus error");
             },
-            destroyed: function() {
+            destroyed: function () {
                 log("destroyed");
             }
         });
     });
 }
 
-function attachToStreamingPlugin(janus){
+function attachToStreamingPlugin(janus) {
     // Attach to streaming plugin
     log("Attach to streaming plugin");
     janus.attach({
         plugin: "janus.plugin.streaming",
-        success: function(pluginHandle) {
+        success: function (pluginHandle) {
             streaming = pluginHandle;
             log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
             // Setup streaming session
             updateStreamsList();
         },
-        error: function(error) {
+        error: function (error) {
             log("  -- Error attaching plugin... " + error);
             console.error("Error attaching plugin... " + error);
         },
-        onmessage: function(msg, jsep) {
+        onmessage: function (msg, jsep) {
             log(" ::: Got a message :::");
 
             log(JSON.stringify(msg));
@@ -193,24 +158,24 @@ function attachToStreamingPlugin(janus){
 
             handleSDP(jsep);
         },
-        onremotestream: function(stream) {
+        onremotestream: function (stream) {
             log(" ::: Got a remote stream :::");
 
             log(JSON.stringify(stream));
 
             handleStream(stream);
         },
-        oncleanup: function() {
+        oncleanup: function () {
             log(" ::: Got a cleanup notification :::");
         }
     });//end of janus.attach
 }
 
-function processMessage(msg){
+function processMessage(msg) {
     var result = msg["result"];
-    if(result && result["status"]){
+    if (result && result["status"]) {
         var status = result["status"];
-        switch(status) {
+        switch (status) {
             case 'starting':
                 log("starting - please wait...");
 
@@ -230,17 +195,18 @@ function processMessage(msg){
 
                 break;
         }
-    }else{
+    } else {
         log("no status available");
     }
 }
+
 // we never appear to get this jsep thing
-function handleSDP(jsep){
+function handleSDP(jsep) {
     log(" :: jsep :: ");
 
     log(jsep);
 
-    if(jsep !== undefined && jsep !== null) {
+    if (jsep !== undefined && jsep !== null) {
         log("Handling SDP as well...");
 
         log(jsep);
@@ -248,17 +214,17 @@ function handleSDP(jsep){
         // Answer
         streaming.createAnswer({
             jsep: jsep,
-            media: { audioSend: false, videoSend: false },      // We want recvonly audio/video
-            success: function(jsep) {
+            media: {audioSend: false, videoSend: false},      // We want recvonly audio/video
+            success: function (jsep) {
                 log("Got SDP!");
 
                 log(jsep);
 
-                var body = { "request": "start" };
+                var body = {"request": "start"};
 
                 streaming.send({"message": body, "jsep": jsep});
             },
-            error: function(error) {
+            error: function (error) {
                 log("WebRTC error:");
 
                 log(error);
@@ -266,11 +232,12 @@ function handleSDP(jsep){
                 console.error("WebRTC error... " + JSON.stringify(error));
             }
         });
-    }else{
+    } else {
         log("no sdp");
     }
 }
-function handleStream(stream){
+
+function handleStream(stream) {
     log(" ::: Got a remote stream :::");
 
     log(JSON.stringify(stream));
@@ -286,16 +253,17 @@ function handleStream(stream){
 }
 
 function updateStreamsList() {
-    var body = { "request": "list" };
+    var body = {"request": "list"};
 
     log("Sending message (" + JSON.stringify(body) + ")");
 
-    streaming.send({"message": body, success: function(result) {
-            if(result === null || result === undefined) {
+    streaming.send({
+        "message": body, success: function (result) {
+            if (result === null || result === undefined) {
                 console.error("no streams available");
                 return;
             }
-            if(result["list"] !== undefined && result["list"] !== null) {
+            if (result["list"] !== undefined && result["list"] !== null) {
                 var list = result["list"];
                 log("Got a list of available streams:");
 
@@ -306,23 +274,26 @@ function updateStreamsList() {
                 var theFirstStream = list[0];
 
                 startStream(theFirstStream);
-            }else{
+            } else {
                 console.error("no streams available - list is null");
+
                 return;
             }
-        }});
+        }
+    });
 }
+
 function startStream(selectedStream) {
     var selectedStreamId = selectedStream["id"];
 
     log("Selected video id #" + selectedStreamId);
 
-    if(selectedStreamId === undefined || selectedStreamId === null) {
+    if (selectedStreamId === undefined || selectedStreamId === null) {
         log("No selected stream");
 
         return;
     }
-    var body = { "request": "watch", id: parseInt(selectedStreamId) };
+    var body = {"request": "watch", id: parseInt(selectedStreamId)};
 
     streaming.send({"message": body});
 }
@@ -330,7 +301,7 @@ function startStream(selectedStream) {
 function stopStream() {
     log("stopping stream");
 
-    var body = { "request": "stop" };
+    var body = {"request": "stop"};
 
     streaming.send({"message": body});
 
