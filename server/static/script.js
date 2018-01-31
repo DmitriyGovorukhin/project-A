@@ -7,7 +7,9 @@ var started = false;
 function log(text) {
     var l = document.getElementById('log');
 
-    l.value += (text + '\n');
+    var time = '[' + new Date().toUTCString() + '] ';
+
+    l.value += (time + text + '\n');
     l.scrollTop = l.scrollHeight;
 }
 

@@ -1,0 +1,36 @@
+[Wed, 31 Jan 2018 21:09:56 GMT] starting Janus
+[Wed, 31 Jan 2018 21:10:01 GMT] Success
+[Wed, 31 Jan 2018 21:10:01 GMT] Attach to streaming plugin
+[Wed, 31 Jan 2018 21:10:01 GMT] Plugin attached! (janus.plugin.streaming, id=8424364637649211)
+[Wed, 31 Jan 2018 21:10:01 GMT] Sending message ({"request":"list"})
+[Wed, 31 Jan 2018 21:10:01 GMT] Got a list of available streams:
+[Wed, 31 Jan 2018 21:10:01 GMT] [object Object],[object Object],[object Object]
+[Wed, 31 Jan 2018 21:10:01 GMT] taking the first available stream
+[Wed, 31 Jan 2018 21:10:01 GMT] Selected video id #1
+[Wed, 31 Jan 2018 21:10:01 GMT]  ::: Got a message :::
+[Wed, 31 Jan 2018 21:10:01 GMT] {"streaming":"event","result":{"status":"preparing"}}
+[Wed, 31 Jan 2018 21:10:01 GMT] preparing
+[Wed, 31 Jan 2018 21:10:01 GMT]  :: jsep ::
+[Wed, 31 Jan 2018 21:10:01 GMT] [object Object]
+[Wed, 31 Jan 2018 21:10:01 GMT] Handling SDP as well...
+[Wed, 31 Jan 2018 21:10:01 GMT] [object Object]
+[Wed, 31 Jan 2018 21:10:02 GMT]  ::: Got a remote stream :::
+[Wed, 31 Jan 2018 21:10:02 GMT] {}
+[Wed, 31 Jan 2018 21:10:02 GMT]  ::: Got a remote stream :::
+[Wed, 31 Jan 2018 21:10:02 GMT] {}
+[Wed, 31 Jan 2018 21:10:02 GMT] attaching remote media stream
+[Wed, 31 Jan 2018 21:10:02 GMT] Got SDP!
+[Wed, 31 Jan 2018 21:10:02 GMT] [object Object]
+[Wed, 31 Jan 2018 21:10:02 GMT]  ::: Got a message :::
+[Wed, 31 Jan 2018 21:10:02 GMT] {"streaming":"event","result":{"status":"starting"}}
+[Wed, 31 Jan 2018 21:10:02 GMT] starting - please wait...
+[Wed, 31 Jan 2018 21:10:02 GMT]  :: jsep ::
+[Wed, 31 Jan 2018 21:10:02 GMT] undefined
+[Wed, 31 Jan 2018 21:10:02 GMT] no sdp
+[Wed, 31 Jan 2018 21:10:02 GMT]  ::: Got a message :::
+[Wed, 31 Jan 2018 21:10:02 GMT] {"streaming":"event","result":{"status":"started"}}
+[Wed, 31 Jan 2018 21:10:02 GMT] started
+[Wed, 31 Jan 2018 21:10:02 GMT]  :: jsep ::
+[Wed, 31 Jan 2018 21:10:02 GMT] undefined
+[Wed, 31 Jan 2018 21:10:02 GMT] no sdp
+[Wed, 31 Jan 2018 21:10:08 GMT] got playing event
