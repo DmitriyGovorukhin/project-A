@@ -19,10 +19,46 @@ function log(msg) {
     console.log(text)
 }
 
-$(document).ready(function () {
-    videos.push($('#big-video'));
-    videos.push($('#small-video'));
+function createVideoHandler(video, id) {
+    return {
+        attach: {
+            plugin: "janus.plugin.streaming",
+            success: function (pluginHandle) {
+                streaming = pluginHandle;
 
+                log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
+                // Setup streaming session
+                updateStreamsList(id);
+            },
+            error: function (error) {
+                log("  -- Error attaching plugin... " + error);
+
+                console.error("Error attaching plugin... " + error);
+            },
+            onmessage: function (msg, jsep) {
+                log(" ::: Got a message :::");
+
+                log(JSON.stringify(msg));
+
+                processMessage(msg);
+
+                handleSDP(jsep);
+            },
+            onremotestream: function (stream) {
+                log(" ::: Got a remote stream :::");
+
+                log(JSON.stringify(stream));
+
+                handleStream(stream, video);
+            },
+            oncleanup: function () {
+                log(" ::: Got a cleanup notification :::");
+            }
+        }
+    }
+}
+
+$(document).ready(function () {
     var socket;
 
     var x = document.getElementById('x');
@@ -117,13 +153,18 @@ function startJanus() {
 
                 return;
             }
+
+            var stream1 = createVideoHandler($('#big-video'), 1);
+
             // Create session
             janus = new Janus({
                 server: server,
                 success: function () {
                     log("Success");
 
-                    attachToStreamingPlugin(janus);
+                    log("Attach to streaming plugin");
+
+                    janus.attach(stream1.attach);
                 },
                 error: function (error) {
                     log(error);
@@ -139,47 +180,6 @@ function startJanus() {
 
         button.blur();
     });
-}
-
-function attachToStreamingPlugin(janus) {
-    // Attach to streaming plugin
-    log("Attach to streaming plugin");
-    janus.attach({
-        plugin: "janus.plugin.streaming",
-        success: function (pluginHandle) {
-            streaming = pluginHandle;
-
-            log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
-            // Setup streaming session
-            updateStreamsList();
-        },
-        error: function (error) {
-            log("  -- Error attaching plugin... " + error);
-
-            console.error("Error attaching plugin... " + error);
-        },
-        onmessage: function (msg, jsep) {
-            log(" ::: Got a message :::");
-
-            log(JSON.stringify(msg));
-
-            processMessage(msg);
-
-            handleSDP(jsep);
-        },
-        onremotestream: function (stream) {
-            log(" ::: Got a remote stream :::");
-
-            log(JSON.stringify(stream));
-
-            handleStream(stream, videos[cnt]);
-
-            cnt++;
-        },
-        oncleanup: function () {
-            log(" ::: Got a cleanup notification :::");
-        }
-    });//end of janus.attach
 }
 
 function processMessage(msg) {
@@ -263,7 +263,7 @@ function handleStream(stream, video) {
     });
 }
 
-function updateStreamsList() {
+function updateStreamsList(id) {
     var body = {"request": "list"};
 
     log("Sending message (" + JSON.stringify(body) + ")");
@@ -278,19 +278,25 @@ function updateStreamsList() {
                 var list = result["list"];
                 log("Got a list of available streams:");
 
-                for (var i = 0; i < 2; i++) {
+                for (var i = 0; i < list.length; i++) {
                     var stream = list[i];
 
-                    log("id #" + stream["id"] + " description:" + stream["description"]);
+                    var streamId = stream["id"];
 
-                    startStream(stream);
+                    if (id !== parseInt(streamId))
+                        continue;
+
+                    log("id #" + +" description:" + stream["description"]);
+
+                    log("Selected video id #" + streamId);
+
+                    var body = {"request": "watch", id: parseInt(streamId)};
+
+                    streaming.send({"message": body});
+
+                    break;
                 }
 
-                /* log("taking the first available stream");
-
-                 var theFirstStream = list[0];
-
-                 startStream(theFirstStream);*/
             } else {
                 console.error("no streams available - list is null");
             }
@@ -298,20 +304,6 @@ function updateStreamsList() {
     });
 }
 
-function startStream(selectedStream) {
-    var selectedStreamId = selectedStream["id"];
-
-    log("Selected video id #" + selectedStreamId);
-
-    if (selectedStreamId === undefined || selectedStreamId === null) {
-        log("No selected stream");
-
-        return;
-    }
-    var body = {"request": "watch", id: parseInt(selectedStreamId)};
-
-    streaming.send({"message": body});
-}
 
 function stopStream() {
     log("stopping stream");
