@@ -4,36 +4,20 @@ var janus = null;
 var streaming = null;
 var started = false;
 
-function log(text) {
+function log(msg) {
     var l = document.getElementById('log');
 
     var time = '[' + new Date().toUTCString() + '] ';
 
-    l.value += (time + text + '\n');
+    var text = time + msg;
+    l.value += text + '\n';
     l.scrollTop = l.scrollHeight;
+
+    console.log(text)
 }
 
 $(document).ready(function () {
-    var button = document.getElementById('btn');
-
-    var connected = false;
-
     var socket;
-
-    $('#btn').click(function () {
-        if (!connected) {
-            button.innerHTML = "disconnect";
-
-            connected = true;
-        } else {
-
-            button.innerHTML = "connect";
-
-            connected = false;
-        }
-
-        button.blur();
-    });
 
     var x = document.getElementById('x');
     var y = document.getElementById('y');
@@ -104,35 +88,50 @@ function startJanus() {
     log("starting Janus");
 
     $('#btn').click(function () {
+        var button = document.getElementById("btn");
+
         if (started) {
-            return;
-        }
+            button.innerHTML = "connect";
 
-        started = true;
+            started = false;
 
-        // Make sure the browser supports WebRTC
-        if (!Janus.isWebrtcSupported()) {
-            console.error("No webrtc support");
+            stopStream();
 
-            return;
-        }
-        // Create session
-        janus = new Janus({
-            server: server,
-            success: function () {
-                log("Success");
+            streaming = null;
 
-                attachToStreamingPlugin(janus);
-            },
-            error: function (error) {
-                log(error);
+            janus = null;
+        } else {
+            button.innerHTML = "disconnect";
 
-                log("janus error");
-            },
-            destroyed: function () {
-                log("destroyed");
+            started = true;
+
+            // Make sure the browser supports WebRTC
+            if (!Janus.isWebrtcSupported()) {
+                console.error("No webrtc support");
+
+                return;
             }
-        });
+            // Create session
+            janus = new Janus({
+                server: server,
+                success: function () {
+                    log("Success");
+
+                    attachToStreamingPlugin(janus);
+                },
+                error: function (error) {
+                    log(error);
+
+                    log("janus error");
+                },
+                destroyed: function () {
+                    log("destroyed");
+                }
+            });
+        }
+
+
+        button.blur();
     });
 }
 
@@ -143,12 +142,14 @@ function attachToStreamingPlugin(janus) {
         plugin: "janus.plugin.streaming",
         success: function (pluginHandle) {
             streaming = pluginHandle;
+
             log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
             // Setup streaming session
             updateStreamsList();
         },
         error: function (error) {
             log("  -- Error attaching plugin... " + error);
+
             console.error("Error attaching plugin... " + error);
         },
         onmessage: function (msg, jsep) {
@@ -165,7 +166,7 @@ function attachToStreamingPlugin(janus) {
 
             log(JSON.stringify(stream));
 
-            handleStream(stream);
+            handleStream(stream, $('#big-video'));
         },
         oncleanup: function () {
             log(" ::: Got a cleanup notification :::");
@@ -239,7 +240,7 @@ function handleSDP(jsep) {
     }
 }
 
-function handleStream(stream) {
+function handleStream(stream, video) {
     log(" ::: Got a remote stream :::");
 
     log(JSON.stringify(stream));
@@ -247,9 +248,9 @@ function handleStream(stream) {
     // Show the stream and hide the spinner when we get a playing event
     log("attaching remote media stream");
 
-    Janus.attachMediaStream($('#big-video').get(0), stream);
+    Janus.attachMediaStream(video.get(0), stream);
 
-    $("#big-video").bind("playing", function () {
+    video.bind("playing", function () {
         log("got playing event");
     });
 }
@@ -269,7 +270,11 @@ function updateStreamsList() {
                 var list = result["list"];
                 log("Got a list of available streams:");
 
-                log(list);
+                for (var i = 0; i < list.length; i++) {
+                    var stream = list[i];
+
+                    log("id #" + stream["id"] + " description:" + stream["description"])
+                }
 
                 log("taking the first available stream");
 
@@ -278,8 +283,6 @@ function updateStreamsList() {
                 startStream(theFirstStream);
             } else {
                 console.error("no streams available - list is null");
-
-                return;
             }
         }
     });
