@@ -1,11 +1,10 @@
 server = "http://" + window.location.hostname + ":8088/janus";
 
 var janus = null;
-var streaming = null;
-var started = false;
+var streamBigVideo = null;
+var streamSmallVideo = null;
 
-var cnt = 0;
-var videos = [];
+var started = false;
 
 function log(msg) {
     var l = document.getElementById('log');
@@ -20,6 +19,8 @@ function log(msg) {
 }
 
 function createVideoHandler(video, id) {
+    var streaming;
+
     return {
         attach: {
             plugin: "janus.plugin.streaming",
@@ -28,7 +29,7 @@ function createVideoHandler(video, id) {
 
                 log("Plugin attached! (" + streaming.getPlugin() + ", id=" + streaming.getId() + ")");
                 // Setup streaming session
-                updateStreamsList(id);
+                updateStreamsList(id, streaming);
             },
             error: function (error) {
                 log("  -- Error attaching plugin... " + error);
@@ -42,18 +43,35 @@ function createVideoHandler(video, id) {
 
                 processMessage(msg);
 
-                handleSDP(jsep);
+                handleSDP(jsep, streaming);
             },
             onremotestream: function (stream) {
                 log(" ::: Got a remote stream :::");
 
                 log(JSON.stringify(stream));
 
-                handleStream(stream, video);
+                // Show the stream and hide the spinner when we get a playing event
+                log("attaching remote media stream");
+
+                Janus.attachMediaStream(video.get(0), stream);
+
+                video.bind("playing", function () {
+                    log("got playing event");
+                });
             },
             oncleanup: function () {
                 log(" ::: Got a cleanup notification :::");
             }
+        },
+
+        stop: function () {
+            log("stopping stream");
+
+            var body = {"request": "stop"};
+
+            streaming.send({"message": body});
+
+            streaming.hangup();
         }
     }
 }
@@ -137,9 +155,8 @@ function startJanus() {
 
             started = false;
 
-            stopStream();
-
-            streaming = null;
+            streamBigVideo.stop();
+            streamSmallVideo.stop();
 
             janus = null;
         } else {
@@ -154,7 +171,8 @@ function startJanus() {
                 return;
             }
 
-            var stream1 = createVideoHandler($('#big-video'), 1);
+            streamBigVideo = createVideoHandler($('#big-video'), 1);
+            streamSmallVideo = createVideoHandler($('#small-video'), 2);
 
             // Create session
             janus = new Janus({
@@ -164,7 +182,8 @@ function startJanus() {
 
                     log("Attach to streaming plugin");
 
-                    janus.attach(stream1.attach);
+                    janus.attach(streamBigVideo.attach);
+                    janus.attach(streamSmallVideo.attach);
                 },
                 error: function (error) {
                     log(error);
@@ -202,7 +221,7 @@ function processMessage(msg) {
             case 'stopped':
                 log("stopped");
 
-                stopStream();
+                //stopStream();
 
                 break;
         }
@@ -212,7 +231,7 @@ function processMessage(msg) {
 }
 
 // we never appear to get this jsep thing
-function handleSDP(jsep) {
+function handleSDP(jsep, streaming) {
     log(" :: jsep :: ");
 
     log(jsep);
@@ -248,22 +267,8 @@ function handleSDP(jsep) {
     }
 }
 
-function handleStream(stream, video) {
-    log(" ::: Got a remote stream :::");
 
-    log(JSON.stringify(stream));
-
-    // Show the stream and hide the spinner when we get a playing event
-    log("attaching remote media stream");
-
-    Janus.attachMediaStream(video.get(0), stream);
-
-    video.bind("playing", function () {
-        log("got playing event");
-    });
-}
-
-function updateStreamsList(id) {
+function updateStreamsList(id, streaming) {
     var body = {"request": "list"};
 
     log("Sending message (" + JSON.stringify(body) + ")");
@@ -286,7 +291,7 @@ function updateStreamsList(id) {
                     if (id !== parseInt(streamId))
                         continue;
 
-                    log("id #" + +" description:" + stream["description"]);
+                    log("id #" + streamId + " description:" + stream["description"]);
 
                     log("Selected video id #" + streamId);
 
@@ -305,13 +310,4 @@ function updateStreamsList(id) {
 }
 
 
-function stopStream() {
-    log("stopping stream");
-
-    var body = {"request": "stop"};
-
-    streaming.send({"message": body});
-
-    streaming.hangup();
-}
 
