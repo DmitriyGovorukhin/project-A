@@ -4,6 +4,9 @@ var janus = null;
 var streaming = null;
 var started = false;
 
+var cnt = 0;
+var videos = [];
+
 function log(msg) {
     var l = document.getElementById('log');
 
@@ -17,6 +20,9 @@ function log(msg) {
 }
 
 $(document).ready(function () {
+    videos.push($('#big-video'));
+    videos.push($('#small-video'));
+
     var socket;
 
     var x = document.getElementById('x');
@@ -166,7 +172,9 @@ function attachToStreamingPlugin(janus) {
 
             log(JSON.stringify(stream));
 
-            handleStream(stream, $('#big-video'));
+            handleStream(stream, videos[cnt]);
+
+            cnt++;
         },
         oncleanup: function () {
             log(" ::: Got a cleanup notification :::");
@@ -270,17 +278,19 @@ function updateStreamsList() {
                 var list = result["list"];
                 log("Got a list of available streams:");
 
-                for (var i = 0; i < list.length; i++) {
+                for (var i = 0; i < 2; i++) {
                     var stream = list[i];
 
-                    log("id #" + stream["id"] + " description:" + stream["description"])
+                    log("id #" + stream["id"] + " description:" + stream["description"]);
+
+                    startStream(stream);
                 }
 
-                log("taking the first available stream");
+                /* log("taking the first available stream");
 
-                var theFirstStream = list[0];
+                 var theFirstStream = list[0];
 
-                startStream(theFirstStream);
+                 startStream(theFirstStream);*/
             } else {
                 console.error("no streams available - list is null");
             }
