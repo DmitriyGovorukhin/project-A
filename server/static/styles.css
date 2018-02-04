@@ -13,7 +13,7 @@
 
 .grp {
     margin-top: 30px;
-   /* border: 1px solid #ddd;*/
+    /* border: 1px solid #ddd;*/
     padding-bottom: 25%;
 }
 
@@ -24,13 +24,13 @@
 .big-video {
     width: 1280px;
     height: 720px;
-    border: 2px solid #dd000d;
+    border: 2px solid #ccc;
 }
 
 .small-video {
     width: 480px;
     height: 320px;
-    border: 2px solid #0032dd;
+    border: 2px solid #ccc;
 }
 
 textarea {
