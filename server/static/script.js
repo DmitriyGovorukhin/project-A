@@ -76,9 +76,13 @@ function createVideoHandler(video, id) {
     }
 }
 
-$(document).ready(function () {
-    var socket;
+var portWs = 8091;
 
+var wsPath = 'ws://' + document.location.hostname + ':' + portWs + '/';
+
+var socket;
+
+$(document).ready(function () {
     var x = document.getElementById('x');
     var y = document.getElementById('y');
 
@@ -155,6 +159,10 @@ function startJanus() {
 
             started = false;
 
+            socket.close();
+
+            socket = null;
+
             streamBigVideo.stop();
             streamSmallVideo.stop();
 
@@ -163,6 +171,29 @@ function startJanus() {
             button.innerHTML = "disconnect";
 
             started = true;
+
+            socket = new WebSocket(wsPath);
+
+            socket.onopen = function () {
+                log("connected to " + wsPath);
+
+                socket.send(JSON.stringify({client: "browser"}))
+            };
+
+            socket.onclose = function (event) {
+                if (event.wasClean) {
+                    log('close');
+                } else {
+                    log('disconnected');
+                }
+
+                log('code: ' + event.code + ' reason: ' + event.reason);
+            };
+
+            socket.onmessage = function (event) {
+                // var obj = JSON.parse(event.data);
+                log(event.data)
+            };
 
             // Make sure the browser supports WebRTC
             if (!Janus.isWebrtcSupported()) {
